@@ -1,23 +1,25 @@
 package musala.drone.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.Hibernate;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.validation.constraints.Size;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
 @Entity
-public class Drone {
-    @Id
-    @Column(name = "id", nullable = false, length = 100)
-    private String serialNumber;
+public class Drone extends BaseModel{
 
+    @Size(max = 100)
+    private UUID serialNumber;
     private enum model{
         Lightweight,
         Middleweight,
@@ -41,7 +43,7 @@ public class Drone {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
         Drone drone = (Drone) o;
-        return serialNumber != null && Objects.equals(serialNumber, drone.serialNumber);
+        return getId() != null && Objects.equals(getId(), drone.getId());
     }
 
     @Override
