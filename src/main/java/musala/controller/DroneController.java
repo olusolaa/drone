@@ -27,37 +27,32 @@ public class DroneController {
 
     @PutMapping("/charging")
     public ResponseEntity<?> charging(Long droneId) {
-        droneService.chargeDrone(droneId);
-        return new ResponseEntity<Drone>(HttpStatus.OK);
+        return new ResponseEntity<>(droneService.chargeDrone(droneId), HttpStatus.OK);
     }
 
-    @DeleteMapping("/unregister")
-    public ResponseEntity<?> unregister(Long droneId) {
-        droneService.unregisterDrone(droneId);
-        return new ResponseEntity<Drone>(HttpStatus.OK);
+    @DeleteMapping("/unregister/{droneId}")
+    public ResponseEntity<?> unregister(@PathVariable Long droneId) {
+        return new ResponseEntity<>(droneService.unregisterDrone(droneId), HttpStatus.OK);
     }
 
-    @PostMapping("load_drone/{id}")
-    public ResponseEntity<?> loadDrone(@PathVariable Long id, @RequestBody MedicationDto medicationDto) {
-        return new ResponseEntity<>(droneService.loadDrone(id, medicationDto.getMedications(),
+    @PostMapping("load_drone/{droneId}")
+    public ResponseEntity<?> loadDrone(@PathVariable Long droneId, @RequestBody MedicationDto medicationDto) {
+        return new ResponseEntity<>(droneService.loadDrone(droneId, medicationDto.getMedications(),
                 medicationDto.getDestination()), HttpStatus.OK);
     }
 
-    @GetMapping("/unload_drone")
-    public ResponseEntity<?> unloadDrone(Long droneId, @RequestBody List<Medication>medications) {
-        droneService.unloadDrone(droneId, medications);
-        return new ResponseEntity<Drone>(HttpStatus.OK);
+    @GetMapping("/unload_drone/{droneId}")
+    public ResponseEntity<?> unloadDrone(@PathVariable Long droneId) {
+        return new ResponseEntity<>(droneService.unloadDrone(droneId), HttpStatus.OK);
     }
 
     @GetMapping("/check_Drone_Loaded_Medications/{droneId}")
     public ResponseEntity<?> checkDroneLoadedMedications(@PathVariable Long droneId) {
-        List<Medication> medications = droneService.checkDroneLoadedMedications(droneId);
-        return new ResponseEntity<>(medications, HttpStatus.OK);
+        return new ResponseEntity<>(droneService.checkDroneLoadedMedications(droneId), HttpStatus.OK);
     }
 
     @GetMapping ("check_Drones_Available_For_Loading")
     public ResponseEntity<?> checkDronesAvailableForLoading() {
-        Set<Drone> drones = droneService.checkDronesAvailableForLoading();
-        return new ResponseEntity<>(drones, HttpStatus.OK);
+        return new ResponseEntity<>(droneService.checkDronesAvailableForLoading(), HttpStatus.OK);
     }
 }
