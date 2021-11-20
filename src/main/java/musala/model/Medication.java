@@ -1,25 +1,30 @@
-package musala.drone.model;
+package musala.model;
 
 import lombok.*;
+import net.minidev.json.annotate.JsonIgnore;
 import org.hibernate.Hibernate;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import java.util.Objects;
+import javax.persistence.*;
 
+import java.util.Objects;
 
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
 @Entity
-public class Medication extends BaseModel{
+public class Medication{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
 
     @Column(name = "name", nullable = false)
     private String name;
-    private String weight;
+    private int weight;
     private String code;
     private String image;
+
 
     @Override
     public boolean equals(Object o) {
