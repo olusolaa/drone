@@ -25,8 +25,8 @@ public class DroneController {
         return new ResponseEntity<>(droneService.registerDrone(registerDroneDto), HttpStatus.OK);
     }
 
-    @PutMapping("/charging")
-    public ResponseEntity<?> charging(Long droneId) {
+    @PutMapping("/charge_drone/{droneId}")
+    public ResponseEntity<?> charging(@PathVariable Long droneId) {
         return new ResponseEntity<>(droneService.chargeDrone(droneId), HttpStatus.OK);
     }
 
@@ -54,5 +54,21 @@ public class DroneController {
     @GetMapping ("check_Drones_Available_For_Loading")
     public ResponseEntity<?> checkDronesAvailableForLoading() {
         return new ResponseEntity<>(droneService.checkDronesAvailableForLoading(), HttpStatus.OK);
+    }
+
+    @PatchMapping("/remove_medications/{droneId}")
+    public ResponseEntity<?> removeMedications(@PathVariable Long droneId, @RequestBody List<Medication> medications) {
+        System.err.println(medications);
+        return new ResponseEntity<>(droneService.removeMedications(droneId, medications), HttpStatus.OK);
+    }
+
+    @GetMapping ("/check_drone_status/{droneId}")
+    public ResponseEntity<?> checkDroneStatus(@PathVariable Long droneId) {
+        return new ResponseEntity<>(droneService.checkDroneStatus(droneId), HttpStatus.OK);
+    }
+
+    @GetMapping ("/check_battery_status/{droneId}")
+    public ResponseEntity<?> checkBatteryStatus(@PathVariable Long droneId) {
+        return new ResponseEntity<>(droneService.chekDroneBatteryStatus(droneId), HttpStatus.OK);
     }
 }
