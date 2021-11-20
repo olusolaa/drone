@@ -12,13 +12,14 @@ import java.util.*;
 
 @Service
 public interface DroneService {
-    public ApiResponse registerDrone(RegisterDroneDto droneDto);
-    void chargeDrone(Long droneId);
-    void unregisterDrone(Long droneId);
-    ApiResponse loadDrone(Long droneId, List<Medication> medications, Destination destination);
-    void unloadDrone(Long droneId, List<Medication> medications);
-    List<Medication> checkDroneLoadedMedications(Long droneId);
-    Estate checkDroneStatus(Long droneId);
-    Set<Drone> checkDronesAvailableForLoading();
-    int chekDroneBatteryStatus(Long droneId);
+    ApiResponse<?> registerDrone(RegisterDroneDto droneDto);
+    ApiResponse<?> chargeDrone(Long droneId);
+    ApiResponse<?> unregisterDrone(Long droneId);
+    ApiResponse<?> loadDrone(Long droneId, List<Medication> medications, Destination destination);
+    ApiResponse<?> unloadDrone(Long droneId);
+    ApiResponse<?> removeMedication(Long droneId, List<Medication> medications);
+    ApiResponse<?> checkDroneLoadedMedications(Long droneId);
+    ApiResponse<?> checkDroneStatus(Long droneId);
+    ApiResponse<?> checkDronesAvailableForLoading();
+    ApiResponse<?> chekDroneBatteryStatus(Long droneId);
 }
