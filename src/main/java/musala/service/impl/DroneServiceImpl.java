@@ -2,6 +2,7 @@ package musala.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import musala.dto.ApiResponse;
+import musala.exception.DroneNotFoundException;
 import musala.model.Destination;
 import musala.dto.RegisterDroneDto;
 import musala.model.Drone;
@@ -33,7 +34,10 @@ public class DroneServiceImpl implements DroneService {
     }
 
     @Override
-    public ApiResponse registerDrone(RegisterDroneDto droneDto) {
+    public ApiResponse<?> registerDrone(RegisterDroneDto droneDto) {
+        droneRepository.findBySerialNumber(droneDto.getSerialNumber()).ifPresent(drone1 -> {
+            throw new RuntimeException("Drone already registered");
+        });
         Drone drone = new Drone();
         drone.setSerialNumber(droneDto.getSerialNumber());
         drone.setModel(droneDto.getModel());
@@ -41,28 +45,25 @@ public class DroneServiceImpl implements DroneService {
         drone.setWeightLimit(droneDto.getWeightLimit());
         drone.setBatteryDischargePerDistance(droneDto.getBatteryDrainRate());
         drone.setState(Estate.IDLE);
-        return new ApiResponse(Estate.IDLE, "Drone registration succesfull", droneRepository.save(drone));
+        return new ApiResponse<>("Drone registration successful", droneRepository.save(drone));
     }
 
-    public void chargeDrone(Long droneId) {
-        droneRepository.findById(droneId).ifPresent(drone -> {
+    public ApiResponse<?> chargeDrone(Long droneId) {
+        Drone drone = droneRepository.findById(droneId).orElseThrow( () -> new DroneNotFoundException("Drone not found"));
             drone.setBatteryCapacity(100);
             droneRepository.save(drone);
-        });
+        return new ApiResponse<>("Drone " + drone.getSerialNumber() + " charged successfully", drone.getBatteryCapacity());
     }
 
     @Override
-    public void unregisterDrone(Long droneId) {
+    public ApiResponse<?> unregisterDrone(Long droneId) {
         droneRepository.deleteById(droneId);
+        return new ApiResponse<>("Drone unregistered successfully", HttpStatus.OK);
     }
 
     @Override
-    public ApiResponse loadDrone(Long droneId, List<Medication> medications, Destination destination) {
-        Optional<Drone> droneDb = droneRepository.findById(droneId);
-            if (droneDb.isEmpty()) {
-                throw new RuntimeException("Drone is not available");
-            }
-            Drone drone = droneDb.get();
+    public ApiResponse<?> loadDrone(Long droneId, List<Medication> medications, Destination destination) {
+        Drone drone = droneRepository.findById(droneId).orElseThrow( () -> new RuntimeException("Drone not found"));;
             if (drone.getDestination() != null && !Objects.equals(drone.getDestination().getCity(), destination.getCity())){
                 throw new RuntimeException("Drone " + drone.getSerialNumber() + " is already loaded with medication heading towards " + drone.getDestination().getCity());
             }
@@ -91,47 +92,61 @@ public class DroneServiceImpl implements DroneService {
             log.info("Drone {} loading completed", drone.getSerialNumber());
             drone.setState(Estate.LOADED);
             droneRepository.save(drone);
-        return new ApiResponse(Estate.LOADED, "Drone {} " + drone.getSerialNumber() + " loaded successfully", drone.getMedications());
+        return new ApiResponse<>("Drone " + drone.getSerialNumber() + " loaded successfully", drone);
     }
 
     @Override
-    public void unloadDrone(Long droneId, List<Medication> medications) {
-        droneRepository.findById(droneId).ifPresent(drone -> {
+    public ApiResponse<?> unloadDrone(Long droneId) {
+        Drone drone = droneRepository.findById(droneId).orElseThrow( () -> new RuntimeException("Drone) not found"));
             if (drone.getDestination().getDistance() != 0) {
                 throw new RuntimeException("Drone is not at destination");
             }
             log.info("Drone {} arrived at destination, unloading medications", drone.getSerialNumber());
             drone.setState(Estate.DELIVERING);
-            drone.getMedications().removeAll(medications);
-            drone.setCurrentWeight(drone.getCurrentWeight() - medications.stream().mapToInt(Medication::getWeight).sum());
-            if (drone.getCurrentWeight() == 0) {
-                log.info("Drone {} unloading completed", drone.getSerialNumber());
-                drone.setState(Estate.DELIVERED);
-            }
+            drone.setMedications(new ArrayList<>());
+            drone.setCurrentWeight(0);
+            log.info("Drone {} unloading completed", drone.getSerialNumber());
+            drone.setState(Estate.DELIVERED);
             droneRepository.save(drone);
-        });
+            return new ApiResponse<>("Drone " + drone.getSerialNumber() + " unloaded successfully", drone.getMedications());
+    }
+
+    @Override
+    public ApiResponse<?> removeMedication(Long droneId, List<Medication> medications) {
+        Drone drone = droneRepository.findById(droneId).orElseThrow(() -> new RuntimeException("Drone not found"));
+            medications.forEach(med -> {
+                        medicationRepository.findByCode(med.getCode()).ifPresent(medication -> {
+                            drone.getMedications().remove(medication);
+                            drone.setCurrentWeight(drone.getCurrentWeight() - medication.getWeight());
+                            log.info("{} removed from drone {}", medication.getName(), drone.getSerialNumber());
+                        });
+                    });
+            droneRepository.save(drone);
+        return new ApiResponse<>( "Medications removed successfully", drone);
     }
 
 
     @Override
-    public List<Medication> checkDroneLoadedMedications(Long droneId) {
-        return droneRepository.findById(droneId).map(Drone::getMedications).orElse(null);
+    public ApiResponse<?> checkDroneLoadedMedications(Long droneId) {
+        List<Medication> medication = droneRepository.findById(droneId).orElseThrow( () -> new DroneNotFoundException("Drone not found")).getMedications();
+        return new ApiResponse<>("Medications retrieved successfully", medication);
     }
 
     @Override
-    public Estate checkDroneStatus(Long droneId) {
-        return droneRepository.findById(droneId).map(Drone::getState).orElse(null);
+    public ApiResponse<?> checkDroneStatus(Long droneId) {
+         Estate state = droneRepository.findById(droneId).orElseThrow( () -> new DroneNotFoundException("Drone not found")).getState();
+         return new ApiResponse<>("Drone status retrieved successfully", state);
     }
 
-    public Set<Drone> checkDronesAvailableForLoading() {
-        return droneRepository.findAllByStateEquals(Estate.IDLE);
+    public ApiResponse<?> checkDronesAvailableForLoading() {
+        return new ApiResponse<>("Drones available for loading", droneRepository.findAllByStateEquals((Estate.IDLE)));
     }
 
     @Override
-    public int chekDroneBatteryStatus(Long droneId) {
-       Drone drone = droneRepository.getById(droneId);
+    public ApiResponse<?> chekDroneBatteryStatus(Long droneId) {
+       Drone drone = droneRepository.findById(droneId).orElseThrow( () -> new DroneNotFoundException("Drone not found"));
             drone.setBatteryCapacity(drone.getBatteryCapacity() - (drone.getDestination().getDistance() - 1) * drone.getBatteryDischargePerDistance());
             log.info("Drone {} battery status: {}", drone.getSerialNumber(), drone.getBatteryCapacity());
-           return droneRepository.save(drone).getBatteryCapacity();
+          return new ApiResponse<>("Drone battery status retrieved successfully", drone.getBatteryCapacity());
     }
 }
