@@ -12,5 +12,5 @@ import java.util.UUID;
 @Repository
 public interface DroneRepository extends JpaRepository<Drone, Long> {
     Optional <Drone> findBySerialNumber(String serialNumber);
-    Set<Drone> findAllByStateEquals(Estate idle);
+    Set<Drone> findAllByCurrentWeightEquals(int weight);
 }
