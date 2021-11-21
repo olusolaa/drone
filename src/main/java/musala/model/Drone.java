@@ -25,11 +25,10 @@ public class Drone{
     private Emodel model;
     private int weightLimit;
     private int currentWeight;
-    private int batteryDischargePerDistance;
     private int batteryCapacity;
     private Estate state;
-
-    @ManyToOne
+    private Long distance;
+    @OneToOne
     private Destination destination;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

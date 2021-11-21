@@ -22,7 +22,7 @@ public class Destination {
     private Long id;
 
     private String city;
-    private int distance;
+    private Long distance;
 
     @Override
     public boolean equals(Object o) {

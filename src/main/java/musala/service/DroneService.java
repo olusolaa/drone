@@ -21,5 +21,6 @@ public interface DroneService {
     ApiResponse<?> checkDroneStatus(Long droneId);
     ApiResponse<?> checkDronesAvailableForLoading();
     ApiResponse<?> chekDroneBatteryStatus(Long droneId);
-    Long getRecentDrone();
+    ApiResponse<?> autoPilot();
+    public boolean isAutoPilot();
 }

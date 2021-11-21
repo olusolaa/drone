@@ -71,4 +71,9 @@ public class DroneController {
     public ResponseEntity<?> checkBatteryStatus(@PathVariable Long droneId) {
         return new ResponseEntity<>(droneService.chekDroneBatteryStatus(droneId), HttpStatus.OK);
     }
+
+    @GetMapping("/auto-pilot")
+    public ResponseEntity<?> autoPilot() {
+        return new ResponseEntity<>(droneService.autoPilot(), HttpStatus.OK);
+    }
 }

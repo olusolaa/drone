@@ -27,8 +27,7 @@ public class DroneServiceImpl implements DroneService {
     private final DroneRepository droneRepository;
     private final MedicationRepository medicationRepository;
     private final DestinationRepository destinationRepository;
-
-    private Long droneId = 0L;
+    private boolean autoPilot = false;
 
     @Autowired
     public DroneServiceImpl(DroneRepository droneRepository, MedicationRepository medicationRepository, DestinationRepository destinationRepository1) {
@@ -47,7 +46,6 @@ public class DroneServiceImpl implements DroneService {
         drone.setModel(droneDto.getModel());
         drone.setBatteryCapacity(100);
         drone.setWeightLimit(droneDto.getWeightLimit());
-        drone.setBatteryDischargePerDistance(droneDto.getBatteryDrainRate());
         drone.setState(Estate.IDLE);
         log.info("Drone {} registered successfully", drone.getSerialNumber());
         return new ApiResponse<>("Drone registration successful", droneRepository.save(drone));
@@ -79,13 +77,14 @@ public class DroneServiceImpl implements DroneService {
             if (drone.getBatteryCapacity() < 25) {
                 throw new RuntimeException("Battery too low");
             }
-            if (drone.getBatteryCapacity() <  2 * destination.getDistance() * drone.getBatteryDischargePerDistance()) {
-                throw new RuntimeException("Destination distance too far");
+            if (drone.getBatteryCapacity() <  (destination.getDistance() + medications.size())/2) {
+                return new ApiResponse<>( "Drone battery can't go that far , please reduce payload or choose a shorter location", null);
             }
             log.info("Drone {} loading medications", drone.getSerialNumber());
 
         Destination finalDestination = destination;
         destination = destinationRepository.findByCity(destination.getCity()).orElseGet(() -> destinationRepository.save(finalDestination));
+            drone.setDistance(destination.getDistance());
             drone.setDestination(destination);
             drone.setState(Estate.LOADING);
             medications.forEach(med -> {
@@ -107,17 +106,18 @@ public class DroneServiceImpl implements DroneService {
     @Override
     public ApiResponse<?> unloadDrone(Long droneId) {
         Drone drone = droneRepository.findById(droneId).orElseThrow( () -> new DroneNotFoundException("Drone not found"));
-            if (drone.getDestination().getDistance() != 0) {
-                throw new WrongDestinationException("Drone is not at destination");
-            }
-            log.info("Drone {} arrived at destination, unloading medications", drone.getSerialNumber());
-            drone.setState(Estate.DELIVERING);
-            drone.setMedications(new ArrayList<>());
-            drone.setCurrentWeight(0);
-            log.info("Drone {} unloading completed", drone.getSerialNumber());
-            drone.setState(Estate.DELIVERED);
-            droneRepository.save(drone);
-            return new ApiResponse<>("Drone " + drone.getSerialNumber() + " unloaded successfully", drone.getMedications());
+        log.info("Drone {} arrived at destination, current state is {}", drone.getSerialNumber(), drone.getState());
+        drone.setState(Estate.DELIVERING);
+        drone.setMedications(new ArrayList<>());
+        drone.setCurrentWeight(0);
+        log.info("Drone {} unloading completed, current state is {} ", drone.getSerialNumber(), drone.getState());
+        drone.setState(Estate.DELIVERED);
+        drone.setDistance(0L);
+        drone.setDestination(null);
+        log.info("Drone {} arrive back at base, current state is {}", drone.getSerialNumber(), drone.getState());
+        drone.setState(Estate.IDLE);
+        droneRepository.save(drone);
+        return new ApiResponse<>("Drone " + drone.getSerialNumber() + " unloaded successfully", drone.getMedications());
     }
 
     @Override
@@ -128,6 +128,11 @@ public class DroneServiceImpl implements DroneService {
                             drone.getMedications().remove(med);
                             drone.setCurrentWeight(drone.getCurrentWeight() - med.getWeight());
                             log.info("{} removed from drone {}", med.getName(), drone.getSerialNumber());
+                            if (drone.getMedications().isEmpty()) {
+                                drone.setState(Estate.IDLE);
+                                drone.setDestination(null);
+                                drone.setDistance(0L);
+                            }
                         } else {
                             throw new MedicationNotFoundException("Medication not found");
                         }
@@ -150,7 +155,7 @@ public class DroneServiceImpl implements DroneService {
     }
 
     public ApiResponse<?> checkDronesAvailableForLoading() {
-        Set<Drone> drones = droneRepository.findAllByCurrentWeightEquals(0);
+        List<Drone> drones = droneRepository.findAllByCurrentWeightEquals(0);
         if (drones.isEmpty()) {
             return new ApiResponse<>("No drones available for loading", null);
         }
@@ -160,21 +165,25 @@ public class DroneServiceImpl implements DroneService {
     @Override
     public ApiResponse<?> chekDroneBatteryStatus(Long droneId) {
        Drone drone = droneRepository.findById(droneId).orElseThrow( () -> new DroneNotFoundException("Drone not found"));
-      this.droneId = droneId;
-        drone.setBatteryCapacity(drone.getBatteryCapacity() - (drone.getDestination().getDistance() - 1) * drone.getBatteryDischargePerDistance());
+        drone.setBatteryCapacity((int) Math.round (drone.getBatteryCapacity() - drone.getCurrentWeight()*0.1));
         if (drone.getBatteryCapacity() <= 0) {
             drone.setBatteryCapacity(0);
             log.info("Drone {} battery is empty", drone.getSerialNumber());
         }else {
             log.info("Drone {} battery status: {}", drone.getSerialNumber(), drone.getBatteryCapacity());
-            droneRepository.save(drone);
         }
-          return new ApiResponse<>("Drone battery status retrieved successfully", drone.getBatteryCapacity()+"%");
+        droneRepository.save(drone);
+        return new ApiResponse<>("Drone battery status retrieved successfully", drone.getBatteryCapacity()+"%");
     }
 
+    @Override
+    public ApiResponse<?> autoPilot() {
+        this.autoPilot = !this.autoPilot;
+        return this.autoPilot ? new ApiResponse<>("AutoPilot is on", null) : new ApiResponse<>("AutoPilot is off", null);
+    }
 
     @Override
-    public Long getRecentDrone() {
-        return droneId;
+    public boolean isAutoPilot() {
+        return this.autoPilot;
     }
 }

@@ -1,4 +1,4 @@
-package musala.drone;
+package musala;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
