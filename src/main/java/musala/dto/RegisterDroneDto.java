@@ -1,5 +1,6 @@
 package musala.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import musala.model.Emodel;
 
@@ -7,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Data
+@AllArgsConstructor
 public class RegisterDroneDto {
 
     @NotNull

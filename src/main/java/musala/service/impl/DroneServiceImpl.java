@@ -37,7 +37,7 @@ public class DroneServiceImpl implements DroneService {
     }
 
     @Override
-    public ApiResponse<?> registerDrone(RegisterDroneDto droneDto) {
+    public ApiResponse<Drone> registerDrone(RegisterDroneDto droneDto) {
         droneRepository.findBySerialNumber(droneDto.getSerialNumber()).ifPresent(drone1 -> {
             throw new RuntimeException("Drone already registered");
         });

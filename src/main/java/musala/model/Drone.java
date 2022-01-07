@@ -15,6 +15,13 @@ import java.util.*;
 @RequiredArgsConstructor
 @Entity
 public class Drone{
+
+//    public Drone(Long id, String serialNumber, Emodel model) {
+//        this.id = id;
+//        this.serialNumber = serialNumber;
+//        this.model = model;
+//    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -37,6 +44,7 @@ public class Drone{
             inverseJoinColumns = @JoinColumn(name = "medication_id"))
     @ToString.Exclude
     private List<Medication> medications = new ArrayList<>();
+
 
     @Override
     public boolean equals(Object o) {
