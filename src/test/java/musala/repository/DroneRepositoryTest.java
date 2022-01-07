@@ -23,11 +23,11 @@ class DroneRepositoryTest {
 
     @Test
     void findBySerialNumber() {
-//        String serialNumber = "1234";
-//        Drone drone = new Drone(1L, serialNumber, Emodel.Cruiserweight);
-//        droneRepository.save(drone);
-//        Optional <Drone> drone2 = droneRepository.findBySerialNumber(serialNumber);
-//        assert drone2.get().getSerialNumber().equals(serialNumber);
-//        assertThat(drone2.get()).isEqualTo(drone);
+        String serialNumber = "1234";
+        Drone drone = new Drone(1L, serialNumber, Emodel.Cruiserweight);
+        droneRepository.save(drone);
+        Optional <Drone> drone2 = droneRepository.findBySerialNumber(serialNumber);
+        assert drone2.get().getSerialNumber().equals(serialNumber);
+        assertThat(drone2.get()).isEqualTo(drone);
     }
 }

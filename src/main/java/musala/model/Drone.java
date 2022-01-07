@@ -45,6 +45,11 @@ public class Drone{
     @ToString.Exclude
     private List<Medication> medications = new ArrayList<>();
 
+    public Drone(long l, String serialNumber, Emodel model) {
+        this.serialNumber = serialNumber;
+        this.model = model;
+    }
+
 
     @Override
     public boolean equals(Object o) {
